@@ -4,7 +4,9 @@ from sqlalchemy.orm import declarative_base
 import uvicorn
 
 
-DATABASE_URL = 'postgresql+asyncpg://user:password@localhost:5432/MainData'
+DATABASE_URL = 'postgresql+asyncpg://postgres:123321@localhost:5432/DataBaseToUsers'
+
+Base = declarative_base()
 
 engine = create_async_engine(
     DATABASE_URL,
@@ -13,8 +15,6 @@ engine = create_async_engine(
     pool_timeout = 20,
     pool_pre_ping= False
 )
-
-BaseTable = declarative_base()
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
