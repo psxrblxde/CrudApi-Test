@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from fastapi import FastAPI
 from sqlalchemy.orm import declarative_base
-import uvicorn
+
 
 
 DATABASE_URL = 'postgresql+asyncpg://postgres:123321@localhost:5432/DataBaseToUsers'
