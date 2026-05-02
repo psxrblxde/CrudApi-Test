@@ -6,17 +6,17 @@ from pydantic import BaseModel
 from TableModel import Users
 from contextlib import asynccontextmanager
 from database import Base, get_db, engine
+from starlette import status
 
 
 app = FastAPI()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.connection = {}
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
-    app.state.connection.clear = {}
+    await conn.commit()
     await conn.dispose()
 
 class UserCreate(BaseModel):
@@ -27,6 +27,9 @@ class UserResponse(BaseModel):
     id: int
     username: str
 
+class UserUpdate(BaseModel):
+    username: str
+    password: str
 class ListUsers(BaseModel):
     id: int
     username: str
@@ -38,11 +41,11 @@ class ListUsers(BaseModel):
 
 
 @app.post('/user', response_model = UserResponse, status_code = 201)
-async def create_user(UserData: UserCreate, db: AsyncSession = Depends(get_db)):
+async def create_user(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
 
-    ExistingRequest = select(Users).where(Users.username == UserData.username)
-    ResultRequest = await db.execute(ExistingRequest)
-    existing_user = ResultRequest.scalar_one_or_none()
+    existing_request = select(Users).where(Users.username == user_data.username)
+    result_request = await db.execute(existing_request)
+    existing_user = result_request.scalar_one_or_none()
 
     if existing_user:
 
@@ -50,21 +53,22 @@ async def create_user(UserData: UserCreate, db: AsyncSession = Depends(get_db)):
 
     else:
 
-        new_user = Users(username = UserData.username, password = UserData.password)
+        new_user = Users(username = user_data.username, password = user_data.password)
         db.add(new_user)
         await db.commit()
         await db.refresh(new_user)
 
     return new_user
 
-@app.get ('/ListUsers/', response_model = ListUsers)
-async def list_users(GetUsers: ListUsers, db: AsyncSession = Depends(get_db)):
+@app.get('/ListUsers', response_model = list[ListUsers], status_code = 200)
+async def list_users(user_id: ListUsers, username: ListUsers, db: AsyncSession = Depends(get_db)):
 
-    ViewUsers = select(Users)
-    Request = await db.execute(ViewUsers)
+    request =  select(Users).where(Users.id == user_id, Users.username == username)
+    users_request = await db.execute(request)
 
-    return Request.scalars()
-@app.put('/update')
-async def update_data(db: AsyncSession = Depends(get_db)):
-    pass
+    return users_request.scalars().all(), status.HTTP_200_OK
+
+@app.patch('/update')
+async def update_data(update: UserUpdate, db: AsyncSession = Depends(get_db)):
+   pass
 
