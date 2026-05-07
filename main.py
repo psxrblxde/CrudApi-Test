@@ -1,9 +1,9 @@
 from http.client import HTTPException
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import  AsyncSession,async_sessionmaker
+from sqlalchemy.ext.asyncio import  AsyncSession
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
-from TableModel import Users
+from src.Models.TableModel import Users
 from contextlib import asynccontextmanager
 from database import Base, get_db, engine
 
