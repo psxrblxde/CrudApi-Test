@@ -1,6 +1,3 @@
 fastapi
 uvicorn
 SQLAlchemy
-playwright
-pytest
-authx
