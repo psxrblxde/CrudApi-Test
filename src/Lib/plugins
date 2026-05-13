@@ -1,3 +1,8 @@
 fastapi
 uvicorn
 SQLAlchemy
+pydentic
+authx
+pytest
+celery
+redis
