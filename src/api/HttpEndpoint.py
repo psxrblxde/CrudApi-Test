@@ -10,9 +10,6 @@ from starlette import status
 from authx import AuthX, AuthXConfig
 
 router = APIRouter()
-
-
-
 @router.post('/login', response_model=UserLogin, status_code = 200, tags = ['Login'], summary= "Login to user")
 async def login(user_data: UserLogin, response: Response, db: AsyncSession = Depends(get_db)):
 
@@ -46,7 +43,6 @@ async def create_user(self, user_data: UserCreate, db: AsyncSession = Depends(ge
 
     else:
         hash_password_function(self, hashed_password=user_data.password)
-        password_hash = new_user
         new_user = Users(username = password_hash.user_data.username, password = password_hash.user_data.password)
         db.add(new_user)
         await db.commit()
