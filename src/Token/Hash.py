@@ -3,6 +3,7 @@ import os
 from authx import AuthXConfig, AuthX
 from fastapi import Depends, HTTPException
 from src.Models.pySchema import UserLogin
+from typing_extensions import Buffer
 
 config = AuthXConfig(
     JWT_SECRET_KEY = 'SECRET_KEY',
@@ -14,18 +15,12 @@ config = AuthXConfig(
 
 auth = AuthX(config = config)
 
-def hash_password_function(self, hashed_password) -> bytes:
+def hash_password_function(plain_password: str):
 
-    self.hashed_password = hashed_password
+    salt = os.urandom(16)
+    transform = hashlib.pbkdf2_hmac('sha256', plain_password.encode('utf-8'), salt, 100_000)
 
-    generate_random_symbol = os.urandom(16)
-    sorted_key = generate_random_symbol[:16]
-
-    crypto_password = hashlib.sha256(hashed_password.encoded('utf-8')).hexdigest()
-    crypto_password = bytes.fromhex(crypto_password)
-    transform = hashlib.pbkdf2_hmac('sha256', hashed_password, sorted_key.encoded('utf-8'), 100_000)
-
-    return transform + crypto_password
+    return salt + transform
 
 
 def verify_password_function(self, user: UserLogin, key = Depends(hash_password_function)):
