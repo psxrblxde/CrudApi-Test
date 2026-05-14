@@ -1,4 +1,5 @@
-from src.Token.HashToken import verify_password_function, hash_password_function, config, auth
+from src.Token.Hash import verify_password_function, hash_password_function
+from src.jwt.Token import config, auth
 from http.client import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import  AsyncSession
@@ -7,21 +8,21 @@ from src.engine_session.database import get_db
 from src.Models.pySchema import UserResponse, UserCreate, ListUsers, UserUpdate, UserLogin
 from src.schema.TableModel import Users
 from starlette import status
-from authx import AuthX, AuthXConfig
+
 
 router = APIRouter()
 @router.post('/login', response_model=UserLogin, status_code = 200, tags = ['Login'], summary= "Login to user")
-async def login(user_data: UserLogin, response: Response, db: AsyncSession = Depends(get_db)):
+async def login(user_login: UserLogin, response: Response, db: AsyncSession = Depends(get_db)):
 
         user = await db.execute(select(Users))
         result  = user.scalars().all()
 
-        if user_data.username == user_data.username and user_data.password == user_data.password:
+        if user_login.username == user_login.username and user_login.password == user_login.password:
 
-            user_token = auth.create_access_token(uid=user_data.username, fresh=True)
+            user_token = auth.create_access_token(uid=user_login.username, fresh=True)
             response.set_cookie(config.JWT_ACCESS_COOKIE_NAME, user_token)
             await db.commit()
-            await db.refresh(user_data)
+            await db.refresh(user_login)
             return {'access_token': user_token}, status.HTTP_200_OK
 
         else:
@@ -30,20 +31,22 @@ async def login(user_data: UserLogin, response: Response, db: AsyncSession = Dep
             raise HTTPException(status_code=401, detail='Incorrect username or password')
 
 
-@router.post('/user', response_model=UserResponse, status_code=201, tags=['Users'], summary="Create a new user")
-async def create_user(self, user_data: UserCreate, db: AsyncSession = Depends(get_db), password_hash: str = Depends(hash_password_function)):
+@router.post('/user_create', response_model=UserResponse, status_code=201, tags=['Users'], summary="Create a new user")
+async def create_user(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
 
+    #user comparison
     existing_request = select(Users).where(Users.username == user_data.username)
     result_request = await db.execute(existing_request)
     existing_user = result_request.scalar_one_or_none()
 
-    if not existing_user:
+    if existing_user:
 
         raise HTTPException(status_code = 404, detail = 'This name already exist')
 
     else:
-        hash_password_function(self, hashed_password=user_data.password)
-        new_user = Users(username = password_hash.user_data.username, password = password_hash.user_data.password)
+        #Hashed password
+        hashed_password = hash_password_function(user_data.password)
+        new_user = Users(username = user_data.username, password = hashed_password)
         db.add(new_user)
         await db.commit()
         await db.refresh(new_user)
