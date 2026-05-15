@@ -14,10 +14,22 @@ router = APIRouter()
 @router.post('/login', response_model=UserLogin, status_code = 200, tags = ['Login'], summary= "Login to user")
 async def login(user_login: UserLogin, response: Response, db: AsyncSession = Depends(get_db)):
 
-        user = await db.execute(select(Users))
-        result  = user.scalars().all()
+        user = select(Users).where(Users.username == user_login.username)
+        query = await db.execute(user)
+        result  = query.scalars().one_or_none()
 
-        if user_login.username == user_login.username and user_login.password == user_login.password:
+        verify = verify_password_function(result.password, user_login.password)
+
+        if not result:
+
+            raise HTTPException(status_code=401, detail='Incorrect username')
+
+        if not await verify:
+
+            await db.rollback()
+            raise HTTPException(status_code=401, detail='Incorrect username or password')
+
+        else:
 
             user_token = auth.create_access_token(uid=user_login.username, fresh=True)
             response.set_cookie(config.JWT_ACCESS_COOKIE_NAME, user_token)
@@ -25,10 +37,6 @@ async def login(user_login: UserLogin, response: Response, db: AsyncSession = De
             await db.refresh(user_login)
             return {'access_token': user_token}, status.HTTP_200_OK
 
-        else:
-
-            await db.rollback()
-            raise HTTPException(status_code=401, detail='Incorrect username or password')
 
 
 @router.post('/user_create', response_model=UserResponse, status_code=201, tags=['Users'], summary="Create a new user")

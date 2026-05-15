@@ -2,8 +2,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from fastapi import FastAPI
 from sqlalchemy.orm import declarative_base
 
-
-
 DATABASE_URL = 'postgresql+asyncpg://postgres:123321@localhost:5432/DataBaseToUsers'
 
 Base = declarative_base()

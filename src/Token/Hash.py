@@ -4,7 +4,6 @@ from fastapi import Depends, HTTPException
 from src.Models.pySchema import UserLogin
 
 
-
 def hash_password_function(plain_password):
 
     salt = os.urandom(16)
@@ -13,18 +12,19 @@ def hash_password_function(plain_password):
     return salt + transform
 
 
-def verify_password_function(self, user: UserLogin, key = Depends(hash_password_function)):
+async def verify_password_function(hashed_password: bytes, plain_password) -> bool:
 
-    if user.password == user.password:
+    salt_first = hashed_password[:16]
+    salt_beyond = hashed_password[16:]
 
-        self.hashed_password = user.password
-        coded_password = key(self.hasehd_password)
+    transform = hashlib.pbkdf2_hmac('sha256', plain_password.endcode('utf-8'), salt_first, 100_000)
 
-        return coded_password
+    return salt_beyond == transform
 
-    else:
 
-        raise HTTPException(status_code=500, detail='Error')
+
+
+
 
 
 
