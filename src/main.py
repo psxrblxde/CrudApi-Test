@@ -17,7 +17,7 @@ async def lifespan():
             await conn.commit()
             await conn.dispose()
     except:
-        raise (HTTPException(status_code=404, detail='error: try again later'))
+            raise (HTTPException(status_code=404, detail='error: try again later'))
 
 
 

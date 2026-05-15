@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-
+#Endpoint for crud operation
 class UserCreate(BaseModel):
     username: str
     password: str
@@ -24,3 +24,4 @@ class UserLogin(BaseModel):
 
     class Config:
         from_attributes = True
+
