@@ -11,7 +11,7 @@ from starlette import status
 
 
 router = APIRouter()
-@router.post('/login', response_model=UserLogin, status_code = 200, tags = ['Login'], summary= "Login to user")
+@router.post('/login', response_model=dict, status_code = 200, tags = ['Login'], summary= "Login to user")
 async def login(user_login: UserLogin, response: Response, db: AsyncSession = Depends(get_db)):
 
         user = select(Users).where(Users.username == user_login.username)
@@ -33,9 +33,7 @@ async def login(user_login: UserLogin, response: Response, db: AsyncSession = De
 
             user_token = auth.create_access_token(uid=user_login.username, fresh=True)
             response.set_cookie(config.JWT_ACCESS_COOKIE_NAME, user_token)
-            await db.commit()
-            await db.refresh(user_login)
-            return {'access_token': user_token}, status.HTTP_200_OK
+            return {'access_token': user_token, 'token_type': 'bearer'}
 
 
 
